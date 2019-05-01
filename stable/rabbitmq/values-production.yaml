@@ -56,13 +56,13 @@ rabbitmq:
   ## ref: https://github.com/bitnami/bitnami-docker-rabbitmq#environment-variables
   ##
   password: null
-  existingPasswordSecret: name-of-existing-secret
+  existingPasswordSecret: null
 
   ## Erlang cookie to determine whether different nodes are allowed to communicate with each other
   ## ref: https://github.com/bitnami/bitnami-docker-rabbitmq#environment-variables
   ##
   erlangCookie: null
-  existingErlangSecret: name-of-existing-secret
+  existingErlangSecret: null
 
   ## Node name to cluster with. e.g.: `clusternode@hostname`
   ## ref: https://github.com/bitnami/bitnami-docker-rabbitmq#environment-variables
