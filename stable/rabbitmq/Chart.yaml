@@ -15,13 +15,11 @@ home: https://www.rabbitmq.com
 icon: https://bitnami.com/assets/stacks/rabbitmq/img/rabbitmq-stack-220x234.png
 sources:
 - https://github.com/bitnami/bitnami-docker-rabbitmq
-- https://github.com/rabbitmq/rabbitmq-server
 maintainers:
 - name: Bitnami
   email: containers@bitnami.com
 - name: desaintmartin
   email: cedric@desaintmartin.fr
-- name: IBM Cloud Private
 engine: gotpl
 kubeVersion: ">=1.8"
 tillerVersion: ">=2.7.2"

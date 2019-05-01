@@ -55,13 +55,13 @@ rabbitmq:
   ## RabbitMQ application password
   ## ref: https://github.com/bitnami/bitnami-docker-rabbitmq#environment-variables
   ##
-  password: ""
+  password: null
   existingPasswordSecret: name-of-existing-secret
 
   ## Erlang cookie to determine whether different nodes are allowed to communicate with each other
   ## ref: https://github.com/bitnami/bitnami-docker-rabbitmq#environment-variables
   ##
-  erlangCookie: ""
+  erlangCookie: null
   existingErlangSecret: name-of-existing-secret
 
   ## Node name to cluster with. e.g.: `clusternode@hostname`
@@ -175,7 +175,7 @@ persistence:
   ## If set to "-", storageClassName: "", which disables dynamic provisioning
   ## If undefined (the default) or set to null, no storageClassName spec is
   ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
-  ##   GKE, AWS & OpenStack, glusterfs on ICP)
+  ##   GKE, AWS & OpenStack)
   ##
   storageClass: null
   accessMode: ReadWriteOnce

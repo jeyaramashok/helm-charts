@@ -23,7 +23,7 @@ Bitnami charts can be used with [Kubeapps](https://kubeapps.com/) for deployment
 
 It is recommended that administrator precreates the secrets rather than passing in the values.yaml
 
-For example:
+example:
 
 _(NOTE: secrets should be converted to base64 `$ echo -n 'D7EtKV41LB' | base64` before passing in the command. )_
 
@@ -34,6 +34,21 @@ kubectl create secret generic some-secret-name \
 ```
 
 Pass this secret during helm installation
+
+```
+--set rabbitmq.existingPasswordSecret=some-secret-name, rabbitmq.existingErlangSecret=some-secret-name
+```
+
+or fix them in [values.yaml](/values.yaml)
+```
+## section of specific values for rabbitmq
+rabbitmq:
+  ...
+  existingPasswordSecret: some-secret-name
+  existingErlangSecret: some-secret-name
+  ...
+  ...
+```
 
 ### Installing on IBM Private Cloud
 
