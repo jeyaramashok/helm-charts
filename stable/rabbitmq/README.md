@@ -5,7 +5,7 @@
 ## TL;DR;
 
 ```bash
-$ helm install stable/rabbitmq
+$ helm install community/rabbitmq
 ```
 
 ## Introduction
@@ -136,23 +136,20 @@ rules:
 Bind the PSP to all service accounts in the namespace](https://www.ibm.com/support/knowledgecenter/SSBS6K_3.1.1/user_management/create_namespace_pspbind.html).
 
 ```bash
-kubectl create rolebinding rabbitmq-rolebinding --role=rabbitmq-role --group=system:serviceaccounts:<namespace> --namespace=<namespace>
+$ kubectl create rolebinding rabbitmq-rolebinding --role=rabbitmq-role --group=system:serviceaccounts:<namespace> --namespace=<namespace>
 ```
 
 ## Installing the Chart
 
-Clone the GitHub repository with the charts
+Add IBM community charts helm repository
 ```bash
-git clone https://github.com/IBM/charts.git
-cd community
+$ helm repo add community https://raw.githubusercontent.com/IBM/charts/master/repo/community/
 ```
 
 To install the chart with the release name `my-release`:
 
 ```bash
-helm install --name my-release \
-  --set rabbitmq.existingPasswordSecret=<existing-secret>,rabbitmq.existingErlangSecret=<existing-secret> \
-  ./rabbitmq
+$ helm install --name my-release community/rabbitmq
 ```
 
 The command deploys RabbitMQ on the Kubernetes cluster in the default configuration. The [configuration](#configuration) section lists the parameters that can be configured during installation.
@@ -267,9 +264,8 @@ Specify each parameter using the `--set key=value[,key=value]` argument to `helm
 
 ```bash
 $ helm install --name my-release \
-	  --set rabbitmq.existingPasswordSecret="",rabbitmq.existingErlangSecret="" \
 	  --set rabbitmq.username=admin,rabbitmq.password=secretpassword,rabbitmq.erlangCookie=secretcookie \
-	    ./rabbitmq
+	    community/rabbitmq
 ```
 
 The above command sets the RabbitMQ admin username and password to `admin` and `secretpassword` respectively. Additionally the secure erlang cookie is set to `secretcookie`.
@@ -278,9 +274,8 @@ Alternatively, a YAML file that specifies the values for the parameters can be p
 
 ```bash
 $ helm install --name my-release \
-    --set rabbitmq.existingPasswordSecret=<existing-secret>,rabbitmq.existingErlangSecret=<existing-secret> \
     -f ./rabbitmq/values.yaml \
-    ./rabbitmq
+    community/rabbitmq
 ```
 
 > **Tip**: You can use the default [values.yaml](values.yaml)
@@ -317,9 +312,8 @@ A standard configuration is provided by default that will run on most developmen
 
 ```bash
 $ helm install --name my-release \
-    --set rabbitmq.existingPasswordSecret=<existing-secret>,rabbitmq.existingErlangSecret=<existing-secret> \
     -f ./rabbitmq/values-production.yaml \
-    ./rabbitmq
+    community/rabbitmq
 ```
 
 ## Persistence
@@ -336,9 +330,8 @@ The chart mounts a [Persistent Volume](http://kubernetes.io/docs/user-guide/pers
 
 ```bash
 $ helm install --name my-release \
-    --set rabbitmq.existingPasswordSecret=<existing-secret>,rabbitmq.existingErlangSecret=<existing-secret> \
     --set persistence.existingClaim=PVC_NAME \
-    ./rabbitmq
+    community/rabbitmq
 ```
 
 ## Upgrading
