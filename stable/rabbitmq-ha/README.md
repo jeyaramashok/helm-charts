@@ -30,15 +30,15 @@ _(NOTE: All secret values should be converted to base64 `$ echo -n 'D7EtKV41LB' 
 
 ```yaml
 apiVersion: v1
-	kind: Secret
-	type: Opaque
-	data:
-	  rabbitmq-username: "Z3V...."
-	  rabbitmq-password: "U3k4NnVSNDg3M...."
-	  rabbitmq-erlang-cookie: "RHRuR3ZaNDRsRTg0a3F2Z0R...."
-	  rabbitmq-management-username: "bWFuYWd....="
-	  rabbitmq-management-password: "OEh5RDVINDhtZ3BmazVNcGR...."
-	  definitions.json: "ewogICJ1c2VycyI6IFsKICAgIHsKICAgICAgIm5hbWUiOiAibWFuYWdl...."
+    kind: Secret
+    type: Opaque
+    data:
+      rabbitmq-username: "Z3V...."
+      rabbitmq-password: "U3k4NnVSNDg3M...."
+      rabbitmq-erlang-cookie: "RHRuR3ZaNDRsRTg0a3F2Z0R...."
+      rabbitmq-management-username: "bWFuYWd....="
+      rabbitmq-management-password: "OEh5RDVINDhtZ3BmazVNcGR...."
+      definitions.json: "ewogICJ1c2VycyI6IFsKICAgIHsKICAgICAgIm5hbWUiOiAibWFuYWdl...."
 ```
 
 definitions.json:
