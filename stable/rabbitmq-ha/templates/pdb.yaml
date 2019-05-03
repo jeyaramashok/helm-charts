@@ -4,14 +4,15 @@ kind: PodDisruptionBudget
 metadata:
   name: {{ template "rabbitmq-ha.fullname" . }}
   labels:
-    app: {{ template "rabbitmq-ha.name" . }}
-    chart: {{ template "rabbitmq-ha.chart" . }}
-    release: {{ .Release.Name }}
-    heritage: {{ .Release.Service }}
+    app.kubernetes.io/name: {{ template "rabbitmq-ha.name" . }}
+    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    app.kubernetes.io/instance: "{{ .Release.Name }}"
+    release: "{{ .Release.Name }}"
+    app.kubernetes.io/managed-by: "{{ .Release.Service }}"
 spec:
   selector:
     matchLabels:
-      app: {{ template "rabbitmq-ha.name" . }}
-      release: {{ .Release.Name }}
+      app.kubernetes.io/name: {{ template "rabbitmq-ha.name" . }}
+      release: "{{ .Release.Name }}"
 {{ toYaml .Values.podDisruptionBudget | indent 2 }}
 {{- end -}}

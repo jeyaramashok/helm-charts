@@ -5,10 +5,11 @@ metadata:
   name: {{ .Release.Name }}-rabbitmq-alerts
   namespace: {{ .Values.prometheus.operator.serviceMonitor.namespace }}
   labels:
-    app: {{ template "rabbitmq-ha.name" . }}
-    chart: {{ template "rabbitmq-ha.chart" . }}
-    release: {{ .Release.Name }}
-    heritage: {{ .Release.Service }}
+    app.kubernetes.io/name: {{ template "rabbitmq-ha.name" . }}
+    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    app.kubernetes.io/instance: "{{ .Release.Name }}"
+    release: "{{ .Release.Name }}"
+    app.kubernetes.io/managed-by: "{{ .Release.Service }}"
 {{- if .Values.prometheus.operator.serviceMonitor.selector }}
 {{ toYaml .Values.prometheus.operator.serviceMonitor.selector | indent 4 }}
 {{- end }}
