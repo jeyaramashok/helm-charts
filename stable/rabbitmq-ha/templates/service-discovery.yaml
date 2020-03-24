@@ -2,16 +2,16 @@ apiVersion: v1
 kind: Service
 metadata:
   annotations:
-    service.alpha.kubernetes.io/tolerate-unready-endpoints: "true"
 {{- if .Values.service.annotations }}
 {{ toYaml .Values.service.annotations | indent 4 }}
 {{- end }}
   name: {{ printf "%s-discovery" (include "rabbitmq-ha.fullname" .) | trunc 63 | trimSuffix "-" }}
   labels:
-    app: {{ template "rabbitmq-ha.name" . }}
-    chart: {{ template "rabbitmq-ha.chart" . }}
-    release: {{ .Release.Name }}
-    heritage: {{ .Release.Service }}
+    app.kubernetes.io/name: {{ template "rabbitmq-ha.name" . }}
+    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    app.kubernetes.io/instance: "{{ .Release.Name }}"
+    release: "{{ .Release.Name }}"
+    app.kubernetes.io/managed-by: "{{ .Release.Service }}"
 spec:
   clusterIP: None
   ports:
@@ -67,6 +67,6 @@ spec:
     {{- end }}
   publishNotReadyAddresses: true
   selector:
-    app: {{ template "rabbitmq-ha.name" . }}
-    release: {{ .Release.Name }}
+    app.kubernetes.io/name: {{ template "rabbitmq-ha.name" . }}
+    release: "{{ .Release.Name }}"
   type: ClusterIP

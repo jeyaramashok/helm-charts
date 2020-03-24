@@ -6,7 +6,7 @@ that implements the Advanced Message Queuing Protocol (AMQP).
 ## TL;DR;
 
 ```bash
-$ helm install stable/rabbitmq-ha
+$ helm install community/rabbitmq-ha
 ```
 
 ## Introduction
@@ -17,15 +17,98 @@ deployment on a [Kubernetes](http://kubernetes.io) cluster using the
 
 ## Prerequisites
 
-- Kubernetes 1.5+ with Beta APIs enabled
+- Kubernetes 1.8+
 - PV provisioner support in the underlying infrastructure
+
+### Secrets
+
+It is recommended that administrator precreates the secrets rather than setting passwords in the values.yaml
+
+Sample secret config:
+
+_(NOTE: All secret values should be converted to base64 `$ echo -n 'D7EtKV41LB' | base64` before passing in the command. )_
+
+```yaml
+apiVersion: v1
+    kind: Secret
+    type: Opaque
+    data:
+      rabbitmq-username: "Z3V...."
+      rabbitmq-password: "U3k4NnVSNDg3M...."
+      rabbitmq-erlang-cookie: "RHRuR3ZaNDRsRTg0a3F2Z0R...."
+      rabbitmq-management-username: "bWFuYWd....="
+      rabbitmq-management-password: "OEh5RDVINDhtZ3BmazVNcGR...."
+      definitions.json: "ewogICJ1c2VycyI6IFsKICAgIHsKICAgICAgIm5hbWUiOiAibWFuYWdl...."
+```
+
+definitions.json:
+```json
+{
+  "users": [
+    {
+      "name": "management",
+      "password": "8HyD5H48mgpfk5M....",
+      "tags": "management"
+    },
+    {
+      "name": "guest",
+      "password": "Sy86uR4871OKbVWh....",
+      "tags": "administrator"
+    }
+  ],
+  "vhosts": [
+    {
+      "name": "/"
+    }
+  ],
+  "permissions": [
+    {
+      "user": "guest",
+      "vhost": "/",
+      "configure": ".*",
+      "read": ".*",
+      "write": ".*"
+    }
+  ],
+  "parameters": [
+
+  ],
+  "policies": [
+
+  ],
+  "queues": [
+
+  ],
+  "exchanges": [
+
+  ],
+  "bindings": [
+
+  ]
+}⏎
+```
+
+Pass this secret during helm installation
+
+```bash
+--set existingSecret=some-secret-name
+```
+
+or fix them in [values.yaml](/values.yaml)
+
+```yaml
+## section of specific values for rabbitmq
+...
+existingSecret: some-secret-name
+...
+```
 
 ## Installing the Chart
 
 To install the chart with the release name `my-release`:
 
 ```bash
-$ helm install --name my-release stable/rabbitmq-ha
+$ helm install --name my-release community/rabbitmq-ha
 ```
 
 The command deploys RabbitMQ on the Kubernetes cluster in the default
@@ -44,7 +127,7 @@ the first place, you can upgrade using the following command:
 $ export ERLANGCOOKIE=$(kubectl get secrets -n <NAMESPACE> <HELM_RELEASE_NAME>-rabbitmq-ha -o jsonpath="{.data.rabbitmq-erlang-cookie}" | base64 --decode)
 $ helm upgrade \
     --set rabbitmqErlangCookie=$ERLANGCOOKIE \
-    <HELM_RELEASE_NAME> stable/rabbitmq-ha
+    <HELM_RELEASE_NAME> community/rabbitmq-ha
 ```
 
 ## Uninstalling the Chart
@@ -83,7 +166,7 @@ and their default values.
 | `image.repository`                             | RabbitMQ container image repository                                                                                                                                                                   | `rabbitmq`                                                 |
 | `image.tag`                                    | RabbitMQ container image tag                                                                                                                                                                          | `3.7.12-alpine`                                            |
 | `image.pullSecrets`                            | Specify docker-registry secret names as an array                                                                                                                                                      | `[]`                                                       |
-| `managementPassword`                           | Management user password. Should be changed from default                                                                                                                                              | `E9R3fjZm4ejFkVFE`                                         |
+| `managementPassword`                           | Management user password.                                                     |
 | `managementUsername`                           | Management user with minimal permissions used for health checks                                                                                                                                       | `management`                                               |
 | `nodeSelector`                                 | Node labels for pod assignment                                                                                                                                                                        | `{}`                                                       |
 | `persistentVolume.accessMode`                  | Persistent volume access modes                                                                                                                                                                        | `[ReadWriteOnce]`                                          |
@@ -174,7 +257,7 @@ Specify each parameter using the `--set key=value[,key=value]` argument to `helm
 ```bash
 $ helm install --name my-release \
   --set rabbitmqUsername=admin,rabbitmqPassword=secretpassword,rabbitmqErlangCookie=secretcookie \
-    stable/rabbitmq-ha
+    community/rabbitmq-ha
 ```
 
 The above command sets the RabbitMQ admin username and password to `admin` and
@@ -185,7 +268,7 @@ Alternatively, a YAML file that specifies the values for the parameters can be
 provided while installing the chart. For example,
 
 ```bash
-$ helm install --name my-release -f values.yaml stable/rabbitmq-ha
+$ helm install --name my-release -f values.yaml community/rabbitmq-ha
 ```
 
 > **Tip**: You can use the default [values.yaml](values.yaml)
@@ -231,7 +314,7 @@ data:
 Then, install the chart with the above configuration:
 
 ```
-$ helm install --name my-release --set existingConfigMap=true stable/rabbitmq-ha
+$ helm install --name my-release --set existingConfigMap=true community/rabbitmq-ha
 ```
 
 ### Custom Secret
@@ -240,11 +323,17 @@ Similar to custom ConfigMap, `existingSecret` can be used to override the defaul
 `rabbitmqCert.existingSecret` can be used to override the default certificates. The custom secret must provide
 the following keys:
 
-* `rabbitmq-user`
+* `rabbitmq-username`
 * `rabbitmq-password`
 * `rabbitmq-erlang-cookie`
+* `rabbitmq-management-username`
+* `rabbitmq-management-password`
 * `definitions.json` (the name can be altered by setting the `definitionsSource`)
 
 ### Prometheus Monitoring & Alerts
 
 Prometheus and its features can be enabled by setting `prometheus.enabled` to `true`.  See values.yaml for more details and configuration options
+
+## Support
+
+If you encounter problems with rabbitmq-sever, create an issue [here](https://github.com/rabbitmq/rabbitmq-server/issues)

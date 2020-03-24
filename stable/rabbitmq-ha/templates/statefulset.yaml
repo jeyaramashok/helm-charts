@@ -1,12 +1,13 @@
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: {{ template "rabbitmq-ha.fullname" . }}
   labels:
-    app: {{ template "rabbitmq-ha.name" . }}
-    chart: {{ template "rabbitmq-ha.chart" . }}
-    release: {{ .Release.Name }}
-    heritage: {{ .Release.Service }}
+    app.kubernetes.io/name: {{ template "rabbitmq-ha.name" . }}
+    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    app.kubernetes.io/instance: "{{ .Release.Name }}"
+    release: "{{ .Release.Name }}"
+    app.kubernetes.io/managed-by: "{{ .Release.Service }}"
 {{- if .Values.extraLabels }}
 {{ toYaml .Values.extraLabels | indent 4 }}
 {{- end }}
@@ -16,11 +17,18 @@ spec:
   replicas: {{ .Values.replicaCount }}
   updateStrategy:
     type: {{ .Values.updateStrategy }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ template "rabbitmq-ha.name" . }}
+      app.kubernetes.io/instance: "{{ .Release.Name }}"
   template:
     metadata:
       labels:
-        app: {{ template "rabbitmq-ha.name" . }}
-        release: {{ .Release.Name }}
+        app.kubernetes.io/name: {{ template "rabbitmq-ha.name" . }}
+        app.kubernetes.io/instance: "{{ .Release.Name }}"
+        helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+        release: "{{ .Release.Name }}"
+        app.kubernetes.io/managed-by: "{{ .Release.Service }}"
 {{- if .Values.extraLabels }}
 {{ toYaml .Values.extraLabels | indent 8 }}
 {{- end }}
@@ -101,14 +109,13 @@ spec:
               protocol: TCP
               containerPort: 5671
             {{- end }}
-          {{- $managementCredentials := printf "%s:%s" .Values.managementUsername .Values.managementPassword | b64enc }}
-          {{- $managementHeader := printf "Authorization: Basic %s" $managementCredentials }}
+          {{- $managementHeader := printf "Authorization: Basic $(echo -n %s:$RABBIT_MANAGEMENT_PASSWORD | base64)" .Values.managementUsername }}
           livenessProbe:
             exec:
               command:
               - /bin/sh
               - -c
-              - 'wget -O - -q --header "{{ $managementHeader }}" http://localhost:15672/api/healthchecks/node | grep -qF "{\"status\":\"ok\"}"'
+              - 'wget -O - -q --header "{{ $managementHeader }}"  http://localhost:15672/api/healthchecks/node | grep -qF "{\"status\":\"ok\"}"'
             initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
             timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
@@ -146,6 +153,11 @@ spec:
             - name: RABBITMQ_HIPE_COMPILE
               value: {{ .Values.rabbitmqHipeCompile | quote }}
             {{- end }}
+            - name: RABBIT_MANAGEMENT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "rabbitmq-ha.secretName" . }}
+                  key: rabbitmq-management-password
           resources:
 {{ toYaml .Values.resources | indent 12 }}
           volumeMounts:
@@ -213,8 +225,8 @@ spec:
             - topologyKey: "kubernetes.io/hostname"
               labelSelector:
                 matchLabels:
-                  app: {{ template "rabbitmq-ha.name" . }}
-                  release: {{ .Release.Name }}
+                  app.kubernetes.io/name: {{ template "rabbitmq-ha.name" . }}
+                  release: "{{ .Release.Name }}"
       {{- else if eq .Values.podAntiAffinity "soft" }}
       affinity:
         podAntiAffinity:
@@ -224,8 +236,8 @@ spec:
                 topologyKey: kubernetes.io/hostname
                 labelSelector:
                   matchLabels:
-                    app: {{ template "rabbitmq-ha.name" . }}
-                    release: {{ .Release.Name }}
+                    app.kubernetes.io/name: {{ template "rabbitmq-ha.name" . }}
+                    release: "{{ .Release.Name }}"
       {{- end }}
       {{- if .Values.priorityClassName }}
       priorityClassName: {{ .Values.priorityClassName }}
