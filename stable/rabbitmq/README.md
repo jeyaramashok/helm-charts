@@ -5,7 +5,7 @@
 ## TL;DR;
 
 ```bash
-$ helm install stable/rabbitmq
+$ helm install community/rabbitmq
 ```
 
 ## Introduction
@@ -19,12 +19,137 @@ Bitnami charts can be used with [Kubeapps](https://kubeapps.com/) for deployment
 - Kubernetes 1.8+
 - PV provisioner support in the underlying infrastructure
 
+### Secrets
+
+It is recommended that administrator precreates the secrets rather than passing in the values.yaml
+
+example:
+
+_(NOTE: secrets should be converted to base64 `$ echo -n 'D7EtKV41LB' | base64` before passing in the command. )_
+
+```bash
+kubectl create secret generic some-secret-name \
+ --from-literal='rabbitmq-password=RDdFdEtWNDFMQg==' \
+ --from-literal='rabbitmq-erlang-cookie=UURSbWpzUGpVd0xBck5vQnFqdDFwWGZRNEkwbmEwN1U='
+```
+
+Pass this secret during helm installation
+
+```
+--set rabbitmq.existingPasswordSecret=some-secret-name, rabbitmq.existingErlangSecret=some-secret-name
+```
+
+or fix them in [values.yaml](/values.yaml)
+```
+## section of specific values for rabbitmq
+rabbitmq:
+  ...
+  existingPasswordSecret: some-secret-name
+  existingErlangSecret: some-secret-name
+  ...
+  ...
+```
+
+### Installing on IBM Private Cloud
+
+#### Image Security Policies
+
+If the cluster has image security policies enforced, following repositories should be allowed.
+
+```
+docker.io/bitnami/rabbitmq:*
+docker.io/bitnami/minideb:*
+docker.io/kbudde/rabbitmq-exporter:*
+```
+
+#### Pod Security Policies
+
+_(NOTE: This required only if you use [values-production.yaml](/values-production.yaml) for installation since it sets up volume permissions using init containers)_
+
+A PodSecurityPolicy (with host volume and root access) to be bound to the target namespace prior to installation.
+
+If the `default` PodSecurityPolicy on your namespace is not restrictive then this step is not needed.
+
+If the default is restrictive, In ICP you can create a new namespace with either a predefined PodSecurityPolicy.
+
+- Predefined PodSecurityPolicy name: [ibm-anyuid-hostpath-psp](https://github.com/IBM/cloud-pak/blob/master/spec/security/psp/README.md)
+
+Alternatively, you can have your cluster administrator setup a custom PodSecurityPolicy for you using the below definition:
+
+- Custom PodSecurityPolicy definition:
+
+```yaml
+apiVersion: extensions/v1beta1
+kind: PodSecurityPolicy
+metadata:
+annotations:
+    kubernetes.io/description: 'This policy allows pods to run with any UID and GID
+    and any volume, including the host path. WARNING:  This policy allows hostPath
+    volumes. Use with caution.'
+name: custom-anyuid-hostpath-psp
+spec:
+allowPrivilegeEscalation: true
+allowedCapabilities:
+- SETPCAP
+- AUDIT_WRITE
+- CHOWN
+- NET_RAW
+- DAC_OVERRIDE
+- FOWNER
+- FSETID
+- KILL
+- SETUID
+- SETGID
+- NET_BIND_SERVICE
+- SYS_CHROOT
+- SETFCAP
+fsGroup:
+    rule: RunAsAny
+requiredDropCapabilities:
+- MKNOD
+runAsUser:
+    rule: RunAsAny
+seLinux:
+    rule: RunAsAny
+supplementalGroups:
+    rule: RunAsAny
+volumes:
+- '*'
+```
+
+- Create a [Role](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#default-roles-and-role-bindings)
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: rabbitmq-role
+rules:
+- apiGroups: ["extensions"]
+  resourceNames: ["ibm-anyuid-hostpath-psp"]
+  resources: ["podsecuritypolicies"]
+  verbs: ["use"]
+```
+
+- Create a RoleBinding
+
+Bind the PSP to all service accounts in the namespace](https://www.ibm.com/support/knowledgecenter/SSBS6K_3.1.1/user_management/create_namespace_pspbind.html).
+
+```bash
+$ kubectl create rolebinding rabbitmq-rolebinding --role=rabbitmq-role --group=system:serviceaccounts:<namespace> --namespace=<namespace>
+```
+
 ## Installing the Chart
+
+Add IBM community charts helm repository
+```bash
+$ helm repo add community https://raw.githubusercontent.com/IBM/charts/master/repo/community/
+```
 
 To install the chart with the release name `my-release`:
 
 ```bash
-$ helm install --name my-release stable/rabbitmq
+$ helm install --name my-release community/rabbitmq
 ```
 
 The command deploys RabbitMQ on the Kubernetes cluster in the default configuration. The [configuration](#configuration) section lists the parameters that can be configured during installation.
@@ -40,6 +165,12 @@ $ helm delete my-release
 ```
 
 The command removes all the Kubernetes components associated with the chart and deletes the release.
+
+If the adminstrator pre created the rabbitmq secrets, they have to be manually deleted.
+
+```bash
+kubectl delete secret some-secret-name
+```
 
 ## Configuration
 
@@ -133,8 +264,8 @@ Specify each parameter using the `--set key=value[,key=value]` argument to `helm
 
 ```bash
 $ helm install --name my-release \
-  --set rabbitmq.username=admin,rabbitmq.password=secretpassword,rabbitmq.erlangCookie=secretcookie \
-    stable/rabbitmq
+	  --set rabbitmq.username=admin,rabbitmq.password=secretpassword,rabbitmq.erlangCookie=secretcookie \
+	    community/rabbitmq
 ```
 
 The above command sets the RabbitMQ admin username and password to `admin` and `secretpassword` respectively. Additionally the secure erlang cookie is set to `secretcookie`.
@@ -142,7 +273,9 @@ The above command sets the RabbitMQ admin username and password to `admin` and `
 Alternatively, a YAML file that specifies the values for the parameters can be provided while installing the chart. For example,
 
 ```bash
-$ helm install --name my-release -f values.yaml stable/rabbitmq
+$ helm install --name my-release \
+    -f ./rabbitmq/values.yaml \
+    community/rabbitmq
 ```
 
 > **Tip**: You can use the default [values.yaml](values.yaml)
@@ -178,7 +311,9 @@ Any load definitions specified will be available within in the container at `/ap
 A standard configuration is provided by default that will run on most development environments. To operate this chart in a production environment, we recommend you use the alternative file values-production.yaml provided in this repository.
 
 ```bash
-$ helm install --name my-release -f values-production.yaml stable/rabbitmq
+$ helm install --name my-release \
+    -f ./rabbitmq/values-production.yaml \
+    community/rabbitmq
 ```
 
 ## Persistence
@@ -194,7 +329,9 @@ The chart mounts a [Persistent Volume](http://kubernetes.io/docs/user-guide/pers
 1. Install the chart
 
 ```bash
-$ helm install --set persistence.existingClaim=PVC_NAME rabbitmq
+$ helm install --name my-release \
+    --set persistence.existingClaim=PVC_NAME \
+    community/rabbitmq
 ```
 
 ## Upgrading
@@ -214,3 +351,7 @@ Use the workaround below to upgrade from versions previous to 3.0.0. The followi
 ```console
 $ kubectl delete statefulset rabbitmq --cascade=false
 ```
+
+## Support
+
+If you encountered a problem running this container, you can file an issue [here](https://github.com/bitnami/bitnami-docker-rabbitmq#issues)

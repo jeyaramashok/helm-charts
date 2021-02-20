@@ -2,11 +2,15 @@ apiVersion: v1
 name: rabbitmq
 version: 5.5.0
 appVersion: 3.7.14
-description: Open source message broker software that implements the Advanced Message Queuing Protocol (AMQP)
+description: Message broker that implements the Advanced Message Queuing Protocol (AMQP)
 keywords:
 - rabbitmq
 - message queue
 - AMQP
+- amd64
+- OpenSource
+- Integration
+- ICP
 home: https://www.rabbitmq.com
 icon: https://bitnami.com/assets/stacks/rabbitmq/img/rabbitmq-stack-220x234.png
 sources:
@@ -17,3 +21,5 @@ maintainers:
 - name: desaintmartin
   email: cedric@desaintmartin.fr
 engine: gotpl
+kubeVersion: ">=1.8"
+tillerVersion: ">=2.7.2"
